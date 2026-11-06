@@ -11,6 +11,7 @@ import MyBookings from './pages/MyBookings.jsx';
 import OffersPage from './pages/OffersPage.jsx';
 import EventsPage from './pages/EventsPage.jsx';
 import StreamPage from './pages/StreamPage.jsx';
+import BlogPage from './pages/BlogPage.jsx';
 import { Login, Register } from './pages/AuthPages.jsx';
 import Dashboard from './pages/admin/Dashboard.jsx';
 import Catalog from './pages/admin/Catalog.jsx';
@@ -72,6 +73,9 @@ export default function App() {
             </NavLink>
             <NavLink to="/stream" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
               PAGES
+            </NavLink>
+            <NavLink to="/blog" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              BLOG
             </NavLink>
             <NavLink to="/offers" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
               OFFERS
@@ -162,6 +166,7 @@ export default function App() {
           <Route path="/plays" element={<EventsPage defaultCategory="Plays" pageTitle="Theatre Plays & Musicals" />} />
           <Route path="/sports" element={<EventsPage defaultCategory="Sports" pageTitle="Sports Screenings & Fan Parks" />} />
           <Route path="/stream" element={<StreamPage />} />
+          <Route path="/blog" element={<BlogPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/validate" element={<RequireRole roles={['staff', 'admin']}><Validate /></RequireRole>} />

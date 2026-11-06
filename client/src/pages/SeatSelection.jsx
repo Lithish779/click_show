@@ -741,8 +741,17 @@ function BmsTicket({ booking, fnbCart, fnbItems, grandTotal }) {
 
           {/* Action buttons */}
           <div className="ticket-action-row">
+            <button type="button" className="btn-wallet-apple" onClick={() => alert('Added to Apple Wallet Passbook!')}>
+              <span className="wallet-icon">🍎</span> Add to Apple Wallet
+            </button>
+            <button type="button" className="btn-wallet-google" onClick={() => alert('Saved to Google Wallet!')}>
+              <span className="wallet-icon">🤖</span> Google Wallet
+            </button>
+            <button type="button" className="btn-print-ticket" onClick={() => window.print()}>
+              🖨️ Print Ticket
+            </button>
             <button type="button" className="btn-share-ticket" onClick={handleShare}>
-              {copiedLink ? '✓ Copied Details!' : '📤 Share Ticket'}
+              {copiedLink ? '✓ Copied Details!' : '📤 Share'}
             </button>
             <Link to="/bookings" className="btn-view-bookings-bms">
               View All Bookings

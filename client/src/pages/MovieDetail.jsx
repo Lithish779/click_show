@@ -1,8 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, fmtDateTime, money } from '../api.js';
 import { useLoad } from '../hooks.js';
 import { Empty, ErrorBox, Loading, Pager } from '../components.jsx';
+
+const TRAILER_MAP = {
+  'Wildwood': 'https://www.youtube-nocookie.com/embed/Way9Dexny3w',
+  'Resident Evil': 'https://www.youtube-nocookie.com/embed/4q6UacoxL6A',
+  'Hope': 'https://www.youtube-nocookie.com/embed/zSWdZVtXT7E',
+  'A Story of Derry': 'https://www.youtube-nocookie.com/embed/fn3KqVaZwCU',
+  'Cyber Samurai': 'https://www.youtube-nocookie.com/embed/8X2kIfS6fb8',
+  'Midnight Express': 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+  'Stellar Drift': 'https://www.youtube-nocookie.com/embed/zSWdZVtXT7E',
+  'default': 'https://www.youtube-nocookie.com/embed/Way9Dexny3w',
+};
+
+function getTrailerFor(title = '') {
+  for (const [k, v] of Object.entries(TRAILER_MAP)) {
+    if (k !== 'default' && title.toLowerCase().includes(k.toLowerCase())) return v;
+  }
+  return TRAILER_MAP.default;
+}
 
 const isoDay = (offset) => {
   const d = new Date();
@@ -17,6 +35,25 @@ export default function MovieDetail({ currentCity }) {
   const [userRating, setUserRating] = useState(null);
   const [ratingModal, setRatingModal] = useState(false);
   const [page, setPage] = useState(1);
+  const [activeTrailer, setActiveTrailer] = useState(null);
+  const trailerDialogRef = useRef(null);
+
+  const openTrailer = (title) => {
+    const url = getTrailerFor(title);
+    setActiveTrailer({ title, url });
+    setTimeout(() => {
+      if (trailerDialogRef.current && !trailerDialogRef.current.open) {
+        trailerDialogRef.current.showModal();
+      }
+    }, 50);
+  };
+
+  const closeTrailer = () => {
+    if (trailerDialogRef.current && trailerDialogRef.current.open) {
+      trailerDialogRef.current.close();
+    }
+    setActiveTrailer(null);
+  };
 
   const selectedIso = isoDay(dayOffset);
 
@@ -111,9 +148,50 @@ export default function MovieDetail({ currentCity }) {
               <a href="#showtimes-section" className="bms-btn-book-big">
                 Select Seats
               </a>
-              <button type="button" className="bms-btn-share">
+              <button
+                type="button"
+                className="bms-btn-trailer-hero"
+                onClick={() => openTrailer(m.title)}
+              >
+                ▶ Watch 4K Trailer
+              </button>
+              <button type="button" className="bms-btn-share" onClick={() => navigator.clipboard?.writeText(window.location.href)}>
                 🔗 Share
               </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== LUXURY AMENITIES BAR ===== */}
+      <section className="luxury-amenities-bar" aria-label="Premium Theatre Amenities">
+        <div className="amenities-container">
+          <div className="amenity-item">
+            <span className="amenity-icon">🛋️</span>
+            <div className="amenity-text">
+              <strong>Full-Recline Loungers</strong>
+              <span>Imported plush leather seating</span>
+            </div>
+          </div>
+          <div className="amenity-item">
+            <span className="amenity-icon">🍿</span>
+            <div className="amenity-text">
+              <strong>Gourmet Butler Dining</strong>
+              <span>Live culinary service to your seat</span>
+            </div>
+          </div>
+          <div className="amenity-item">
+            <span className="amenity-icon">🔊</span>
+            <div className="amenity-text">
+              <strong>Dolby Atmos Spatial Audio</strong>
+              <span>64-channel immersive soundscape</span>
+            </div>
+          </div>
+          <div className="amenity-item">
+            <span className="amenity-icon">🅿️</span>
+            <div className="amenity-text">
+              <strong>Complimentary Valet</strong>
+              <span>VIP arrival and lounge access</span>
             </div>
           </div>
         </div>
@@ -306,6 +384,40 @@ export default function MovieDetail({ currentCity }) {
           </div>
         </div>
       )}
+      {/* Native 4K Official Trailer Modal Dialog */}
+      <dialog
+        ref={trailerDialogRef}
+        className="bms-trailer-dialog"
+        aria-labelledby="trailer-dialog-title"
+        onClose={closeTrailer}
+      >
+        <div className="trailer-dialog-inner">
+          <div className="trailer-dialog-top">
+            <h3 id="trailer-dialog-title" className="trailer-title-heading">
+              🎬 {activeTrailer?.title || m.title} — Official 4K Preview
+            </h3>
+            <button
+              type="button"
+              className="btn-close-trailer"
+              onClick={closeTrailer}
+              aria-label="Close trailer dialog"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="trailer-iframe-box">
+            {activeTrailer && (
+              <iframe
+                src={`${activeTrailer.url}?autoplay=1&rel=0&modestbranding=1`}
+                title={`${activeTrailer.title} Trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="trailer-iframe"
+              />
+            )}
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }

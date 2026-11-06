@@ -1,8 +1,26 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, money } from '../api.js';
 import { useLoad } from '../hooks.js';
 import { Empty, ErrorBox, Loading, Pager } from '../components.jsx';
+
+const TRAILER_MAP = {
+  'Wildwood': 'https://www.youtube-nocookie.com/embed/Way9Dexny3w',
+  'Resident Evil': 'https://www.youtube-nocookie.com/embed/4q6UacoxL6A',
+  'Hope': 'https://www.youtube-nocookie.com/embed/zSWdZVtXT7E',
+  'A Story of Derry': 'https://www.youtube-nocookie.com/embed/fn3KqVaZwCU',
+  'Cyber Samurai': 'https://www.youtube-nocookie.com/embed/8X2kIfS6fb8',
+  'Midnight Express': 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+  'Stellar Drift': 'https://www.youtube-nocookie.com/embed/zSWdZVtXT7E',
+  'default': 'https://www.youtube-nocookie.com/embed/Way9Dexny3w',
+};
+
+function getTrailerFor(title = '') {
+  for (const [k, v] of Object.entries(TRAILER_MAP)) {
+    if (k !== 'default' && title.toLowerCase().includes(k.toLowerCase())) return v;
+  }
+  return TRAILER_MAP.default;
+}
 
 export default function Movies({ currentCity, onOpenCityModal }) {
   const [searchParams] = useSearchParams();
@@ -16,6 +34,9 @@ export default function Movies({ currentCity, onOpenCityModal }) {
   const [activeTab, setActiveTab] = useState('movies');
   const [selectedDate, setSelectedDate] = useState('today');
   const [selectedCinema, setSelectedCinema] = useState('all');
+
+  const [activeTrailer, setActiveTrailer] = useState(null);
+  const trailerDialogRef = useRef(null);
 
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
@@ -37,9 +58,9 @@ export default function Movies({ currentCity, onOpenCityModal }) {
     return [
       { _id: 't1', name: 'Starlight Cinemas', city: 'Jalandhar' },
       { _id: 't2', name: 'Grand Palace', city: 'Phagwara' },
-      { _id: 't3', name: 'PVR INOX Gold', city: 'Mumbai' },
-      { _id: 't4', name: 'Cinépolis VIP', city: 'Delhi-NCR' },
-      { _id: 't5', name: 'Awaken Cinemas', city: 'London' },
+      { _id: 't3', name: 'PVR INOX: Palladium', city: 'Mumbai' },
+      { _id: 't4', name: 'Cinépolis VIP: Select Citywalk', city: 'Delhi-NCR' },
+      { _id: 't5', name: 'Odeon Luxe: Leicester Square', city: 'London' },
     ];
   }, [theatresRes.data]);
 
@@ -70,6 +91,23 @@ export default function Movies({ currentCity, onOpenCityModal }) {
     }
   };
 
+  const openTrailer = (movie) => {
+    const url = getTrailerFor(movie.title);
+    setActiveTrailer({ title: movie.title, url });
+    setTimeout(() => {
+      if (trailerDialogRef.current && !trailerDialogRef.current.open) {
+        trailerDialogRef.current.showModal();
+      }
+    }, 50);
+  };
+
+  const closeTrailer = () => {
+    if (trailerDialogRef.current && trailerDialogRef.current.open) {
+      trailerDialogRef.current.close();
+    }
+    setActiveTrailer(null);
+  };
+
   // Sort movies client side
   const sortedMovies = useMemo(() => {
     if (!data?.data) return [];
@@ -89,7 +127,7 @@ export default function Movies({ currentCity, onOpenCityModal }) {
   return (
     <div className="main-full">
       {/* =====================================================================
-          HERO SECTION MATCHING MOVTIC SCREENSHOT
+          HERO SECTION WITH LUXURY BRANDING & VECTOR FILM REELS
           ===================================================================== */}
       <section className="hero-section" aria-label="Hero Banner">
         <div className="hero-bg-glow" aria-hidden="true" />
@@ -114,12 +152,35 @@ export default function Movies({ currentCity, onOpenCityModal }) {
           </svg>
         </div>
 
-        {/* Hero Title & Subtitle */}
+        {/* Hero Title & Subtitle with Luxury Badges */}
         <div className="hero-content">
+          <div className="hero-vip-badge">
+            <span className="vip-crown">👑</span>
+            <span>ULTRA LUXURY CINEMA DESTINATION</span>
+          </div>
+
           <h1 className="hero-title">GET MOVIE TICKETS</h1>
           <p className="hero-subtitle">
-            Buy movie tickets in advance, find movie times watch trailers, read movie reviews and much more
+            Buy movie tickets in advance, find movie times, watch 4K trailers, and reserve VIP recliners in luxury auditoriums.
           </p>
+
+          <div className="hero-amenities-row">
+            <span className="hero-amenity">🛋️ Full-Recline Loungers</span>
+            <span className="hero-amenity">🍿 Gourmet Butler Dining</span>
+            <span className="hero-amenity">🔊 Dolby Atmos 7.1</span>
+            <span className="hero-amenity">🎟️ Instant QR Entry</span>
+          </div>
+
+          <div className="hero-action-buttons">
+            <button
+              type="button"
+              className="btn-hero-trailer-play"
+              onClick={() => openTrailer({ title: 'Feature Film Spotlight' })}
+            >
+              <span className="play-triangle">▶</span>
+              <span>Watch 4K Trailer Reel</span>
+            </button>
+          </div>
         </div>
 
         {/* ===================================================================
@@ -388,7 +449,7 @@ export default function Movies({ currentCity, onOpenCityModal }) {
                       <div className="bms-rating-strip">
                         <span className="bms-rating-star">★</span>
                         <strong className="bms-rating-num">{m.rating || '8.8/10'}</strong>
-                        <span className="bms-vote-count">38.4K Votes</span>
+                        <span className="bms-vote-count">42.8K Votes</span>
                       </div>
 
                       {/* Badges on Poster */}
@@ -399,6 +460,11 @@ export default function Movies({ currentCity, onOpenCityModal }) {
                     </Link>
 
                     <div className="card-body">
+                      <div className="card-occupancy-pill">
+                        <span className="occ-dot" />
+                        <span>⚡ 85% Seats Filled</span>
+                      </div>
+
                       <h3 className="card-title">
                         <Link to={`/movies/${m._id}`}>{m.title}</Link>
                       </h3>
@@ -411,10 +477,23 @@ export default function Movies({ currentCity, onOpenCityModal }) {
                       </div>
 
                       <div className="card-footer">
-                        <span className="card-price">From ₹180</span>
-                        <Link to={`/movies/${m._id}`} className="btn-book-ticket">
-                          Select Seats →
-                        </Link>
+                        <div className="price-tag-wrap">
+                          <span className="price-sub">Tickets</span>
+                          <span className="card-price">From ₹180</span>
+                        </div>
+                        <div className="card-btn-group">
+                          <button
+                            type="button"
+                            className="btn-card-trailer"
+                            onClick={() => openTrailer(m)}
+                            title={`Watch 4K Trailer for ${m.title}`}
+                          >
+                            ▶ Trailer
+                          </button>
+                          <Link to={`/movies/${m._id}`} className="btn-book-ticket">
+                            Select Seats →
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </li>
@@ -459,9 +538,18 @@ export default function Movies({ currentCity, onOpenCityModal }) {
 
                     <div className="list-action">
                       <span className="card-price">From ₹180</span>
-                      <Link to={`/movies/${m._id}`} className="btn-book-ticket">
-                        Select Seats →
-                      </Link>
+                      <div className="list-btn-group">
+                        <button
+                          type="button"
+                          className="btn-card-trailer"
+                          onClick={() => openTrailer(m)}
+                        >
+                          ▶ Trailer
+                        </button>
+                        <Link to={`/movies/${m._id}`} className="btn-book-ticket">
+                          Select Seats →
+                        </Link>
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -500,7 +588,7 @@ export default function Movies({ currentCity, onOpenCityModal }) {
         {activeTab === 'sports' && (
           <div className="tab-pane-sports">
             <div className="bms-events-grid-preview" style={{ marginTop: '1.5rem' }}>
-              {(liveEvents.data?.events || []).filter((e) => e.category === 'Sports' || e.type.includes('Cricket')).map((evt) => (
+              {(liveEvents.data?.events || []).filter((e) => e.category === 'Sports' || e.type.includes('Cricket') || e.type.includes('Football')).map((evt) => (
                 <div key={evt.id} className="bms-event-card-preview">
                   <div className="evt-preview-poster">
                     <img src={evt.poster} alt={evt.title} loading="lazy" />
@@ -597,6 +685,43 @@ export default function Movies({ currentCity, onOpenCityModal }) {
           ))}
         </div>
       </section>
+
+      {/* =====================================================================
+          NATIVE 4K OFFICIAL TRAILER MODAL DIALOG
+          ===================================================================== */}
+      <dialog
+        ref={trailerDialogRef}
+        className="bms-trailer-dialog"
+        aria-labelledby="trailer-dialog-title"
+        onClose={closeTrailer}
+      >
+        <div className="trailer-dialog-inner">
+          <div className="trailer-dialog-top">
+            <h3 id="trailer-dialog-title" className="trailer-title-heading">
+              🎬 {activeTrailer?.title || 'Official Trailer'} — 4K UHD Preview
+            </h3>
+            <button
+              type="button"
+              className="btn-close-trailer"
+              onClick={closeTrailer}
+              aria-label="Close trailer dialog"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="trailer-iframe-box">
+            {activeTrailer && (
+              <iframe
+                src={`${activeTrailer.url}?autoplay=1&rel=0&modestbranding=1`}
+                title={`${activeTrailer.title} Trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="trailer-iframe"
+              />
+            )}
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }
