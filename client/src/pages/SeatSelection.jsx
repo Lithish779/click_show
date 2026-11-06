@@ -32,7 +32,7 @@ export default function SeatSelection() {
   const fnbCatalog = useLoad(() => api('/bms/fnb'), []);
 
   const [targetCount, setTargetCount] = useState(2);
-  const [showVehicleModal, setShowVehicleModal] = useState(true);
+  const [showVehicleModal, setShowVehicleModal] = useState(false); // start directly on seat layout
 
   const [selected, setSelected] = useState([]);
   const [error, setError] = useState(null);
@@ -74,6 +74,28 @@ export default function SeatSelection() {
   const mine = seats.filter((s) => s.status === 'mine');
   const ticketBaseTotal = (hold ? mine : seats.filter((s) => selected.includes(s.seatId))).reduce((a, s) => a + s.price, 0);
 
+  // Group rows by Category for BookMyShow style tiers
+  const categorizedRows = useMemo(() => {
+    if (!map.data?.rows) return [];
+    const groups = [];
+    let currentCat = null;
+    let currentGroup = null;
+
+    map.data.rows.forEach((r) => {
+      if (r.category !== currentCat) {
+        currentCat = r.category;
+        currentGroup = {
+          category: r.category,
+          price: map.data.prices?.[r.category] || 200,
+          rows: [],
+        };
+        groups.push(currentGroup);
+      }
+      currentGroup.rows.push(r);
+    });
+    return groups;
+  }, [map.data]);
+
   // Calculate convenience fee (~₹30 per ticket + 18% GST)
   const ticketCount = hold ? mine.length : selected.length;
   const convenienceFee = ticketCount ? Math.round(ticketCount * 30 * 1.18) : 0;
@@ -95,10 +117,62 @@ export default function SeatSelection() {
   if (map.error && !map.data) return <ErrorBox error={map.error} />;
   const s = show.data;
 
+  // Auto-find and add N adjacent seats
+  const autoAddSeats = (count = targetCount) => {
+    if (hold) return;
+    setError(null);
+    setTargetCount(count);
+
+    // Try finding contiguous available seats in rows
+    for (const r of map.data?.rows || []) {
+      const available = r.seats.filter((st) => st.status === 'available');
+      if (available.length >= count) {
+        for (let i = 0; i <= r.seats.length - count; i++) {
+          const slice = r.seats.slice(i, i + count);
+          if (slice.every((st) => st.status === 'available')) {
+            setSelected(slice.map((st) => st.seatId));
+            return;
+          }
+        }
+      }
+    }
+
+    // Fallback: grab any available seats
+    const anyAvailable = seats.filter((st) => st.status === 'available').slice(0, count);
+    if (anyAvailable.length) {
+      setSelected(anyAvailable.map((st) => st.seatId));
+    } else {
+      setError({ message: 'No seats available for this selection.' });
+    }
+  };
+
+  // Toggle or add seats on click
   const toggle = (seat) => {
     if (hold || ['booked', 'held'].includes(seat.status)) return;
     setError(null);
-    setSelected((cur) => (cur.includes(seat.seatId) ? cur.filter((x) => x !== seat.seatId) : cur.length < MAX_SEATS ? [...cur, seat.seatId] : cur));
+
+    // If currently 0 selected and targetCount > 1, try contiguous auto-select from clicked seat
+    if (selected.length === 0 && targetCount > 1) {
+      const row = map.data.rows.find((r) => r.seats.some((st) => st.seatId === seat.seatId));
+      if (row) {
+        const startIdx = row.seats.findIndex((st) => st.seatId === seat.seatId);
+        const contiguous = row.seats.slice(startIdx, startIdx + targetCount);
+        if (contiguous.length === targetCount && contiguous.every((st) => st.status === 'available')) {
+          setSelected(contiguous.map((st) => st.seatId));
+          return;
+        }
+      }
+    }
+
+    setSelected((cur) => {
+      if (cur.includes(seat.seatId)) {
+        return cur.filter((x) => x !== seat.seatId);
+      }
+      if (cur.length < MAX_SEATS) {
+        return [...cur, seat.seatId];
+      }
+      return cur;
+    });
   };
 
   async function act(fn) {
@@ -207,11 +281,40 @@ export default function SeatSelection() {
           type="button"
           className="bms-btn-edit-qty"
           onClick={() => setShowVehicleModal(true)}
+          title="Change number of tickets"
         >
-          <span>{targetCount} Tickets</span>
+          <span>{selected.length ? `${selected.length} Selected` : `${targetCount} Tickets`}</span>
           <span className="btn-pencil">✏️</span>
         </button>
       </div>
+
+      {/* QUICK ADD SEATS BAR */}
+      {!hold && (
+        <div className="quick-add-seats-bar">
+          <span className="quick-add-label">⚡ Quick Add Seats:</span>
+          <div className="quick-add-buttons">
+            {[1, 2, 3, 4, 5, 6].map((num) => (
+              <button
+                key={num}
+                type="button"
+                className={`btn-quick-add ${selected.length === num ? 'active' : ''}`}
+                onClick={() => autoAddSeats(num)}
+              >
+                + {num} {num === 1 ? 'Seat' : 'Seats'}
+              </button>
+            ))}
+            {selected.length > 0 && (
+              <button
+                type="button"
+                className="btn-clear-selection"
+                onClick={() => setSelected([])}
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Seat Layout Area */}
       <div className="seatmap-wrapper">
@@ -220,29 +323,43 @@ export default function SeatSelection() {
           <p className="screen-subtext">All eyes this way please!</p>
         </div>
 
+        <ErrorBox error={error} />
+
+        {/* Categorized Tiered Seat Layout */}
         <div className="bms-seatmap" role="group" aria-label="Seat layout">
-          {map.data.rows.map((r) => (
-            <div className="bms-seat-row" key={r.row}>
-              <span className="row-code" aria-hidden="true">{r.row}</span>
-              <div className="row-seats">
-                {r.seats.map((seat) => {
-                  const isSel = selected.includes(seat.seatId);
-                  const cls = seat.status === 'mine' ? 'mine' : isSel ? 'selected' : seat.status;
-                  return (
-                    <button
-                      key={seat.seatId}
-                      type="button"
-                      className={`bms-seat ${cls} cat-${r.category.toLowerCase()}`}
-                      onClick={() => toggle(seat)}
-                      disabled={['booked', 'held'].includes(seat.status)}
-                      aria-pressed={isSel || seat.status === 'mine'}
-                      title={`${seat.seatId} · ${r.category} · ${money(seat.price)}`}
-                    >
-                      {seat.seatId.slice(1)}
-                    </button>
-                  );
-                })}
+          {categorizedRows.map((group) => (
+            <div key={group.category} className="bms-tier-group">
+              <div className="bms-tier-header">
+                <span className="tier-cat-title">
+                  {group.category === 'RECLINER' ? '👑 RECLINER' : group.category === 'PREMIUM' ? '⭐ PREMIUM' : '🎟️ STANDARD'}
+                </span>
+                <span className="tier-cat-price">{money(group.price)}</span>
               </div>
+
+              {group.rows.map((r) => (
+                <div className="bms-seat-row" key={r.row}>
+                  <span className="row-code" aria-hidden="true">{r.row}</span>
+                  <div className="row-seats">
+                    {r.seats.map((seat) => {
+                      const isSel = selected.includes(seat.seatId);
+                      const cls = seat.status === 'mine' ? 'mine' : isSel ? 'selected' : seat.status;
+                      return (
+                        <button
+                          key={seat.seatId}
+                          type="button"
+                          className={`bms-seat ${cls} cat-${r.category.toLowerCase()}`}
+                          onClick={() => toggle(seat)}
+                          disabled={['booked', 'held'].includes(seat.status)}
+                          aria-pressed={isSel || seat.status === 'mine'}
+                          title={`Click to ${isSel ? 'remove' : 'add'} Seat ${seat.seatId} (${r.category} - ${money(seat.price)})`}
+                        >
+                          {seat.seatId.slice(1)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -254,15 +371,6 @@ export default function SeatSelection() {
           <li><span className="legend-box mine" /> Held by you</li>
           <li><span className="legend-box booked" /> Sold out</li>
         </ul>
-
-        {/* Pricing Tiers */}
-        <div className="bms-pricing-tiers">
-          {Object.entries(map.data.prices).map(([cat, pr]) => (
-            <span key={cat} className="tier-badge">
-              <strong>{cat}</strong>: {money(pr)}
-            </span>
-          ))}
-        </div>
       </div>
 
       {/* Floating Bottom Action Bar */}
@@ -271,10 +379,19 @@ export default function SeatSelection() {
           <div className="bottom-bar-inner">
             <div className="bottom-left">
               {selected.length === 0 ? (
-                <span className="no-seats-text">Please select your preferred seats on the map</span>
+                <div className="prompt-seats">
+                  <span className="no-seats-text">Click on any seat to add seats, or use Quick Add buttons</span>
+                </div>
               ) : (
-                <div>
-                  <span className="seats-selected-list">Seats: <strong>{selected.join(', ')}</strong></span>
+                <div className="selected-summary-pills">
+                  <span className="seats-selected-list">
+                    Selected ({selected.length}):{' '}
+                    {selected.map((st) => (
+                      <span key={st} className="seat-badge-pill" onClick={() => toggle({ seatId: st })}>
+                        {st} ✕
+                      </span>
+                    ))}
+                  </span>
                   <span className="seats-price-total">Subtotal: <strong>{money(ticketBaseTotal)}</strong></span>
                 </div>
               )}
@@ -286,7 +403,7 @@ export default function SeatSelection() {
               disabled={selected.length === 0 || busy}
               onClick={holdSeats}
             >
-              {busy ? 'Holding Seats…' : `Continue with ${selected.length || 0} Seats`}
+              {busy ? 'Holding Seats…' : `Select Seats & Continue (${selected.length})`}
             </button>
           </div>
         </div>
@@ -502,6 +619,7 @@ export default function SeatSelection() {
                   className={`vehicle-btn ${targetCount === v.count ? 'active' : ''}`}
                   onClick={() => {
                     setTargetCount(v.count);
+                    autoAddSeats(v.count);
                     setShowVehicleModal(false);
                   }}
                 >
@@ -522,7 +640,10 @@ export default function SeatSelection() {
             <button
               type="button"
               className="btn-vehicle-select"
-              onClick={() => setShowVehicleModal(false)}
+              onClick={() => {
+                autoAddSeats(targetCount);
+                setShowVehicleModal(false);
+              }}
             >
               Select Seats
             </button>

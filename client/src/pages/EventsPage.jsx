@@ -141,3 +141,4 @@ export default function EventsPage({ defaultCategory = 'Events', pageTitle = 'Li
     </div>
   );
 }
+

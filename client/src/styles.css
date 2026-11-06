@@ -4566,3 +4566,135 @@ th {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ==========================================================================
+   SELECT SEATS & ADD SEATS INTERACTIVE ENHANCEMENTS
+   ========================================================================== */
+
+/* Quick Add Seats Control Strip */
+.quick-add-seats-bar {
+  background: #151829;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.quick-add-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #dddddd;
+}
+
+.quick-add-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-quick-add {
+  background: #23273e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-quick-add:hover {
+  background: var(--bms-red);
+  border-color: var(--bms-red);
+}
+
+.btn-quick-add.active {
+  background: var(--bms-green-avail);
+  color: #0c0f1d;
+  border-color: var(--bms-green-avail);
+}
+
+.btn-clear-selection {
+  background: rgba(255, 85, 85, 0.15);
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  color: #ff8888;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Tiered Sections on Seat Map */
+.bms-tier-group {
+  margin-bottom: 1.75rem;
+}
+
+.bms-tier-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 580px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tier-cat-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #bbbbbb;
+}
+
+.tier-cat-price {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--bms-green-avail);
+}
+
+/* Bottom Bar Summary Pills */
+.selected-summary-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.seat-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--bms-green-avail);
+  color: #0c0f1d;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-right: 0.35rem;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.seat-badge-pill:hover {
+  transform: scale(1.08);
+}
+
+.pill-select-tag {
+  font-size: 0.64rem;
+  font-weight: 800;
+  margin-top: 2px;
+  color: var(--bms-green-avail);
+}
+
+.showtime-pill:hover .pill-select-tag {
+  color: #ffffff;
+}

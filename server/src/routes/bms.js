@@ -51,3 +51,4 @@ router.get('/cities', (_req, res) => {
 });
 
 module.exports = router;
+

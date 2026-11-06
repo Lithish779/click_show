@@ -120,3 +120,4 @@ export default function CityModal({ isOpen, onClose, selectedCity, onSelectCity 
     </dialog>
   );
 }
+

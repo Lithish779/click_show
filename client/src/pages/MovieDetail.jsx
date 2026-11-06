@@ -109,7 +109,7 @@ export default function MovieDetail({ currentCity }) {
 
             <div className="detail-cta-row">
               <a href="#showtimes-section" className="bms-btn-book-big">
-                Book Tickets
+                Select Seats
               </a>
               <button type="button" className="bms-btn-share">
                 🔗 Share
@@ -239,7 +239,7 @@ export default function MovieDetail({ currentCity }) {
                       >
                         <span className="time-text">{startTime}</span>
                         <span className="format-text">{s.format}</span>
-                        {isLow && <span className="low-sub">Filling fast</span>}
+                        <span className="pill-select-tag">{isSoldOut ? 'Sold out' : 'Select Seats'}</span>
                       </Link>
 
                       {/* Tooltip on hover showing prices */}

@@ -4,46 +4,6 @@ import { api, money } from '../api.js';
 import { useLoad } from '../hooks.js';
 import { Empty, ErrorBox, Loading, Pager } from '../components.jsx';
 
-// Hero promotional carousel slides
-const PROMO_SLIDES = [
-  {
-    id: 'promo-1',
-    title: 'Wildwood: The Enchanted Realm',
-    tagline: 'An Epic Fantasy Adventure Beyond Imagination',
-    certification: 'U/A',
-    formats: 'IMAX 3D · 4DX · 2D',
-    rating: '★ 8.8/10',
-    votes: '48.2K Votes',
-    languages: 'English, Hindi, Tamil',
-    backdrop: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&auto=format&fit=crop&q=80',
-    badge: 'Trending #1 in Cinemas',
-  },
-  {
-    id: 'promo-2',
-    title: 'Resident Evil: The Beginning',
-    tagline: 'Experience The Terror In Dolby Atmos Sound',
-    certification: 'A',
-    formats: '2D · 3D · 4DX',
-    rating: '★ 7.8/10',
-    votes: '62.4K Votes',
-    languages: 'English, Hindi',
-    backdrop: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1200&auto=format&fit=crop&q=80',
-    badge: 'Blockbuster Weekend',
-  },
-  {
-    id: 'promo-3',
-    title: 'Hope: The Cosmic Voyage',
-    tagline: 'A Thrilling Sci-Fi Mystery That Redefines Space Cinema',
-    certification: 'U/A',
-    formats: 'IMAX · 2D',
-    rating: '★ 8.4/10',
-    votes: '31.9K Votes',
-    languages: 'English',
-    backdrop: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1200&auto=format&fit=crop&q=80',
-    badge: 'Critics Choice Award',
-  },
-];
-
 export default function Movies({ currentCity, onOpenCityModal }) {
   const [searchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
@@ -52,17 +12,13 @@ export default function Movies({ currentCity, onOpenCityModal }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [sortBy, setSortBy] = useState('now-showing');
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [viewMode, setViewMode] = useState('grid');
+  const [activeTab, setActiveTab] = useState('movies');
+  const [selectedDate, setSelectedDate] = useState('today');
+  const [selectedCinema, setSelectedCinema] = useState('all');
+
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
-
-  // Auto carousel rotation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % PROMO_SLIDES.length);
-    }, 5500);
-    return () => clearInterval(timer);
-  }, []);
 
   // Sync urlQuery if changed
   useEffect(() => {
@@ -74,6 +30,18 @@ export default function Movies({ currentCity, onOpenCityModal }) {
   const filters = useLoad(() => api('/movies/filters'), []);
   const liveEvents = useLoad(() => api('/bms/events', { query: { city: currentCity } }), [currentCity]);
   const liveOffers = useLoad(() => api('/bms/offers'), []);
+  const theatresRes = useLoad(() => api('/theatres'), []);
+
+  const theatresList = useMemo(() => {
+    if (theatresRes.data && theatresRes.data.length > 0) return theatresRes.data;
+    return [
+      { _id: 't1', name: 'Starlight Cinemas', city: 'Jalandhar' },
+      { _id: 't2', name: 'Grand Palace', city: 'Phagwara' },
+      { _id: 't3', name: 'PVR INOX Gold', city: 'Mumbai' },
+      { _id: 't4', name: 'Cinépolis VIP', city: 'Delhi-NCR' },
+      { _id: 't5', name: 'Awaken Cinemas', city: 'London' },
+    ];
+  }, [theatresRes.data]);
 
   const { data, error, loading } = useLoad(
     () => api('/movies', { query: { q: f.q, genre: f.genre, language: f.language, page, limit: pageSize } }),
@@ -118,208 +86,445 @@ export default function Movies({ currentCity, onOpenCityModal }) {
     return list;
   }, [data?.data, sortBy]);
 
-  const currentSlide = PROMO_SLIDES[activeSlide];
-
   return (
-    <div className="bms-home-wrap">
-      {/* ===== HERO CAROUSEL BANNER ===== */}
-      <section className="bms-hero-carousel" aria-label="Featured Releases">
-        <div
-          className="bms-carousel-slide"
-          style={{ backgroundImage: `linear-gradient(to right, rgba(10, 14, 30, 0.95) 20%, rgba(10, 14, 30, 0.4) 60%, rgba(10, 14, 30, 0.85) 100%), url(${currentSlide.backdrop})` }}
-        >
-          <div className="carousel-slide-content">
-            <span className="carousel-badge">{currentSlide.badge}</span>
-            <h1 className="carousel-title">{currentSlide.title}</h1>
-            <p className="carousel-tagline">{currentSlide.tagline}</p>
+    <div className="main-full">
+      {/* =====================================================================
+          HERO SECTION MATCHING MOVTIC SCREENSHOT
+          ===================================================================== */}
+      <section className="hero-section" aria-label="Hero Banner">
+        <div className="hero-bg-glow" aria-hidden="true" />
+        
+        {/* Cinema Film Reel Vector Artwork */}
+        <div className="hero-decorations" aria-hidden="true">
+          <svg className="decor-reel left" width="220" height="220" viewBox="0 0 200 200" fill="currentColor">
+            <circle cx="100" cy="100" r="90" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.3" />
+            <circle cx="100" cy="100" r="30" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.4" />
+            <circle cx="100" cy="45" r="14" fill="currentColor" opacity="0.35" />
+            <circle cx="100" cy="155" r="14" fill="currentColor" opacity="0.35" />
+            <circle cx="45" cy="100" r="14" fill="currentColor" opacity="0.35" />
+            <circle cx="155" cy="100" r="14" fill="currentColor" opacity="0.35" />
+          </svg>
+          <svg className="decor-reel right" width="260" height="260" viewBox="0 0 200 200" fill="currentColor">
+            <circle cx="100" cy="100" r="90" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.3" />
+            <circle cx="100" cy="100" r="30" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.4" />
+            <circle cx="100" cy="45" r="14" fill="currentColor" opacity="0.35" />
+            <circle cx="100" cy="155" r="14" fill="currentColor" opacity="0.35" />
+            <circle cx="45" cy="100" r="14" fill="currentColor" opacity="0.35" />
+            <circle cx="155" cy="100" r="14" fill="currentColor" opacity="0.35" />
+          </svg>
+        </div>
 
-            <div className="carousel-meta-row">
-              <span className="bms-meta-rating">{currentSlide.rating} <small>({currentSlide.votes})</small></span>
-              <span className="bms-meta-badge">{currentSlide.certification}</span>
-              <span className="bms-meta-formats">{currentSlide.formats}</span>
-              <span className="bms-meta-langs">{currentSlide.languages}</span>
+        {/* Hero Title & Subtitle */}
+        <div className="hero-content">
+          <h1 className="hero-title">GET MOVIE TICKETS</h1>
+          <p className="hero-subtitle">
+            Buy movie tickets in advance, find movie times watch trailers, read movie reviews and much more
+          </p>
+        </div>
+
+        {/* ===================================================================
+            FLOATING SEARCH CARD ("WHAT ARE YOU LOOKING FOR")
+            =================================================================== */}
+        <div className="search-card-wrapper">
+          <div className="search-card">
+            {/* Top row of card */}
+            <div className="search-card-header">
+              <div className="search-card-title-group">
+                <span className="search-card-sub">WELCOME TO MOVTIC</span>
+                <h2 className="search-card-main">WHAT ARE YOU LOOKING FOR</h2>
+              </div>
+
+              {/* Category tabs on right */}
+              <div className="search-category-tabs" role="tablist" aria-label="Entertainment Types">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'movies'}
+                  className={`cat-tab ${activeTab === 'movies' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('movies')}
+                >
+                  <span className="cat-icon" aria-hidden="true">🍿</span>
+                  <span>MOVIES</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'events'}
+                  className={`cat-tab ${activeTab === 'events' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('events')}
+                >
+                  <span className="cat-icon" aria-hidden="true">🎟️</span>
+                  <span>EVENTS</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'sports'}
+                  className={`cat-tab ${activeTab === 'sports' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('sports')}
+                >
+                  <span className="cat-icon" aria-hidden="true">⚽</span>
+                  <span>SPORTS</span>
+                </button>
+              </div>
             </div>
 
-            <div className="carousel-cta-row">
-              <a href="#recommended-movies" className="bms-btn-book-hero">
-                Book Tickets
-              </a>
-              <button type="button" className="bms-btn-trailer">
-                ▶ Watch Trailer
-              </button>
+            {/* 4-Segment Unified Search & Filter Bar */}
+            <div className="search-bar-unified">
+              {/* 1. Search for Movies */}
+              <div className="search-field query-field">
+                <span className="field-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder={activeTab === 'events' ? 'Search for Live Events, Concerts' : activeTab === 'sports' ? 'Search for Sports Matches' : 'Search for Movies'}
+                  value={f.q}
+                  onChange={change('q')}
+                  aria-label="Search entertainment"
+                />
+              </div>
+
+              <div className="field-divider" aria-hidden="true" />
+
+              {/* 2. City Selector */}
+              <div
+                className="search-field select-field"
+                onClick={onOpenCityModal}
+                style={{ cursor: 'pointer' }}
+                title="Click to change city"
+              >
+                <span className="field-icon" aria-hidden="true">📍</span>
+                <div className="select-inner">
+                  <span className="field-label">City</span>
+                  <span className="search-select" style={{ display: 'flex', alignItems: 'center' }}>
+                    {currentCity}
+                  </span>
+                </div>
+              </div>
+
+              <div className="field-divider" aria-hidden="true" />
+
+              {/* 3. Date Selector */}
+              <div className="search-field select-field">
+                <span className="field-icon" aria-hidden="true">📅</span>
+                <div className="select-inner">
+                  <span className="field-label">Date</span>
+                  <select
+                    className="search-select"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    aria-label="Filter by date"
+                  >
+                    <option value="today">Today, 07 Nov</option>
+                    <option value="tomorrow">Tomorrow, 08 Nov</option>
+                    <option value="weekend">Weekend, 09 Nov</option>
+                    <option value="all">Any Date</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="field-divider" aria-hidden="true" />
+
+              {/* 4. Cinema Selector */}
+              <div className="search-field select-field">
+                <span className="field-icon" aria-hidden="true">🎥</span>
+                <div className="select-inner">
+                  <span className="field-label">Cinema</span>
+                  <select
+                    className="search-select"
+                    value={selectedCinema}
+                    onChange={(e) => setSelectedCinema(e.target.value)}
+                    aria-label="Filter by cinema"
+                  >
+                    <option value="all">All Theatres</option>
+                    {theatresList.map((th) => (
+                      <option key={th._id || th.name} value={th.name}>
+                        {th.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* Carousel Arrows */}
-          <button
-            type="button"
-            className="carousel-nav-btn prev"
-            onClick={() => setActiveSlide((prev) => (prev === 0 ? PROMO_SLIDES.length - 1 : prev - 1))}
-            aria-label="Previous slide"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className="carousel-nav-btn next"
-            onClick={() => setActiveSlide((prev) => (prev + 1) % PROMO_SLIDES.length)}
-            aria-label="Next slide"
-          >
-            ›
-          </button>
-
-          {/* Indicators */}
-          <div className="carousel-indicators">
-            {PROMO_SLIDES.map((s, idx) => (
-              <button
-                key={s.id}
-                type="button"
-                className={`indicator-dot ${activeSlide === idx ? 'active' : ''}`}
-                onClick={() => setActiveSlide(idx)}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
           </div>
         </div>
       </section>
 
-      {/* ===== RECOMMENDED MOVIES / NOW SHOWING SECTION ===== */}
-      <section id="recommended-movies" className="bms-section-container" aria-labelledby="rec-movies-heading">
-        <div className="bms-section-header">
-          <div>
-            <h2 id="rec-movies-heading" className="bms-section-title">
-              Recommended Movies in {currentCity}
-            </h2>
-            <p className="bms-section-subtitle">
-              Book tickets with real-time seat availability across all theatres in {currentCity}
-            </p>
+      {/* =====================================================================
+          CATALOG SECTION WITH TOOLBAR
+          ===================================================================== */}
+      <section className="catalog-section" aria-labelledby="catalog-heading">
+        {/* Toolbar matching screenshot: Genre filters on left, controls on right */}
+        <div className="catalog-toolbar">
+          <div className="toolbar-left">
+            <div className="genre-pills">
+              <button
+                type="button"
+                className={`genre-pill ${!f.genre ? 'active' : ''}`}
+                onClick={() => { setPage(1); setF((p) => ({ ...p, genre: '' })); }}
+              >
+                All Genres
+              </button>
+              {(filters.data?.genres || []).map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  className={`genre-pill ${f.genre === g ? 'active' : ''}`}
+                  onClick={() => { setPage(1); setF((p) => ({ ...p, genre: g })); }}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="bms-section-actions">
-            <div className="tmdb-live-indicator" title="Connected to live The Movie Database API">
-              <span className="pulse-dot" aria-hidden="true"></span>
+          <div className="toolbar-right">
+            {/* TMDB Live Indicator */}
+            <div className="tmdb-live-badge" title="Real-time live synchronization with TMDB">
+              <span className="tmdb-live-dot" aria-hidden="true" />
               <span>TMDB Live Feed</span>
             </div>
+
             <button
               type="button"
-              className="btn-sync-tmdb-bms"
+              className="btn-tmdb-sync"
               onClick={handleTmdbSync}
               disabled={syncing}
             >
               🔄 {syncing ? 'Syncing...' : 'Sync Live Movies'}
             </button>
-          </div>
-        </div>
 
-        {/* Filters and Search Bar */}
-        <div className="bms-filters-bar">
-          <div className="bms-genre-scroll">
-            <button
-              type="button"
-              className={`bms-chip ${!f.genre ? 'active' : ''}`}
-              onClick={() => { setPage(1); setF((prev) => ({ ...prev, genre: '' })); }}
-            >
-              All Genres
-            </button>
-            {filters.data?.genres.map((g) => (
-              <button
-                key={g}
-                type="button"
-                className={`bms-chip ${f.genre === g ? 'active' : ''}`}
-                onClick={() => { setPage(1); setF((prev) => ({ ...prev, genre: g })); }}
+            {/* Show Count Dropdown */}
+            <div className="toolbar-control">
+              <label htmlFor="select-show-count" className="control-label">Show:</label>
+              <select
+                id="select-show-count"
+                value={pageSize}
+                onChange={(e) => { setPage(1); setPageSize(Number(e.target.value)); }}
+                className="select-mini"
+                aria-label="Movies per page"
               >
-                {g}
+                <option value={8}>8</option>
+                <option value={12}>12</option>
+                <option value={16}>16</option>
+                <option value={24}>24</option>
+              </select>
+            </div>
+
+            {/* Sort by Dropdown */}
+            <div className="toolbar-control">
+              <label htmlFor="select-sort-by" className="control-label">Sort by:</label>
+              <select
+                id="select-sort-by"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="select-mini"
+                aria-label="Sort movies"
+              >
+                <option value="now-showing">Now Showing</option>
+                <option value="top-rated">Top Rated</option>
+                <option value="duration">Shortest Duration</option>
+                <option value="title">Alphabetical (A-Z)</option>
+              </select>
+            </div>
+
+            {/* View Mode Toggle: Grid [ ⊞ ] vs List [ ☰ ] */}
+            <div className="view-mode-toggle" role="group" aria-label="Catalog view style">
+              <button
+                type="button"
+                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid View"
+                aria-pressed={viewMode === 'grid'}
+              >
+                ⊞
               </button>
-            ))}
-          </div>
-
-          <div className="bms-filter-controls">
-            {/* Language filter */}
-            <select
-              value={f.language}
-              onChange={change('language')}
-              className="bms-select-ctrl"
-              aria-label="Filter by language"
-            >
-              <option value="">All Languages</option>
-              {filters.data?.languages.map((l) => (
-                <option key={l} value={l}>{l}</option>
-              ))}
-            </select>
-
-            {/* Sort filter */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bms-select-ctrl"
-              aria-label="Sort movies"
-            >
-              <option value="now-showing">Now Showing</option>
-              <option value="top-rated">Highest Rated</option>
-              <option value="duration">Shortest Duration</option>
-              <option value="title">Alphabetical (A-Z)</option>
-            </select>
+              <button
+                type="button"
+                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List View"
+                aria-pressed={viewMode === 'list'}
+              >
+                ☰
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Sync alert & states */}
         {syncMsg && <p className="alert success">{syncMsg}</p>}
         <ErrorBox error={error} />
         {loading && <Loading label="Loading movies in your city..." />}
-        {data && !sortedMovies.length && (
-          <Empty>No movies matching your criteria. Try changing genre, language, or search query.</Empty>
+
+        {/* Active tab content: MOVIES */}
+        {activeTab === 'movies' && (
+          <>
+            {data && !sortedMovies.length && (
+              <Empty>No movies found matching your filters. Try selecting &quot;All Genres&quot; or clearing your search.</Empty>
+            )}
+
+            {/* GRID VIEW */}
+            {viewMode === 'grid' && (
+              <ul className="movtic-grid">
+                {sortedMovies.map((m) => (
+                  <li key={m._id} className="movtic-card">
+                    <Link to={`/movies/${m._id}`} className="card-poster-wrap">
+                      {m.posterUrl ? (
+                        <img src={m.posterUrl} alt={`${m.title} poster`} className="card-poster-img" loading="lazy" />
+                      ) : (
+                        <div className="card-poster-fallback">
+                          <span className="fallback-symbol">🎬</span>
+                          <strong className="fallback-title">{m.title}</strong>
+                        </div>
+                      )}
+
+                      {/* BookMyShow Rating Strip */}
+                      <div className="bms-rating-strip">
+                        <span className="bms-rating-star">★</span>
+                        <strong className="bms-rating-num">{m.rating || '8.8/10'}</strong>
+                        <span className="bms-vote-count">38.4K Votes</span>
+                      </div>
+
+                      {/* Badges on Poster */}
+                      <div className="poster-badges">
+                        <span className="badge-rating">{m.rating || 'U/A'}</span>
+                        <span className="badge-format">{m.formats?.[0] || '2D'}</span>
+                      </div>
+                    </Link>
+
+                    <div className="card-body">
+                      <h3 className="card-title">
+                        <Link to={`/movies/${m._id}`}>{m.title}</Link>
+                      </h3>
+                      <div className="card-meta">
+                        <span>{m.language}</span>
+                        <span className="meta-bullet">•</span>
+                        <span>{m.durationMins} mins</span>
+                        <span className="meta-bullet">•</span>
+                        <span>{m.genres?.slice(0, 2).join(', ')}</span>
+                      </div>
+
+                      <div className="card-footer">
+                        <span className="card-price">From ₹180</span>
+                        <Link to={`/movies/${m._id}`} className="btn-book-ticket">
+                          Select Seats →
+                        </Link>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* LIST VIEW */}
+            {viewMode === 'list' && (
+              <ul className="movtic-list">
+                {sortedMovies.map((m) => (
+                  <li key={m._id} className="movtic-list-item">
+                    <Link to={`/movies/${m._id}`} className="list-poster-wrap">
+                      {m.posterUrl ? (
+                        <img src={m.posterUrl} alt={`${m.title} poster`} className="list-poster-img" loading="lazy" />
+                      ) : (
+                        <div className="card-poster-fallback">🎬</div>
+                      )}
+                    </Link>
+
+                    <div className="list-content">
+                      <div className="list-header">
+                        <h3 className="list-title">
+                          <Link to={`/movies/${m._id}`}>{m.title}</Link>
+                        </h3>
+                        <div className="list-badges">
+                          <span className="badge-rating">★ {m.rating || '8.8/10'}</span>
+                          <span className="badge-format">{m.formats?.join(', ') || '2D'}</span>
+                        </div>
+                      </div>
+
+                      <div className="list-meta">
+                        <span>{m.language}</span>
+                        <span className="meta-bullet">•</span>
+                        <span>{m.durationMins} mins</span>
+                        <span className="meta-bullet">•</span>
+                        <span>{m.genres?.join(', ')}</span>
+                      </div>
+
+                      <p className="list-desc">{m.description}</p>
+                    </div>
+
+                    <div className="list-action">
+                      <span className="card-price">From ₹180</span>
+                      <Link to={`/movies/${m._id}`} className="btn-book-ticket">
+                        Select Seats →
+                      </Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <Pager meta={data?.meta} onPage={setPage} />
+          </>
         )}
 
-        {/* Movies Grid */}
-        <div className="bms-movie-grid">
-          {sortedMovies.map((m) => (
-            <div key={m._id} className="bms-movie-card">
-              <Link to={`/movies/${m._id}`} className="bms-card-poster-link">
-                <div className="bms-poster-container">
-                  {m.posterUrl ? (
-                    <img src={m.posterUrl} alt={`${m.title} poster`} className="bms-poster-img" loading="lazy" />
-                  ) : (
-                    <div className="bms-poster-placeholder">
-                      <span>🎬</span>
-                      <strong>{m.title}</strong>
+        {/* Active tab content: EVENTS */}
+        {activeTab === 'events' && (
+          <div className="tab-pane-events">
+            <div className="bms-events-grid-preview" style={{ marginTop: '1.5rem' }}>
+              {(liveEvents.data?.events || []).map((evt) => (
+                <div key={evt.id} className="bms-event-card-preview">
+                  <div className="evt-preview-poster">
+                    <img src={evt.poster} alt={evt.title} loading="lazy" />
+                    <span className="evt-type-badge">{evt.type}</span>
+                  </div>
+                  <div className="evt-preview-info">
+                    <h4 className="evt-preview-title">{evt.title}</h4>
+                    <p className="evt-preview-venue">📍 {evt.venue}</p>
+                    <div className="evt-preview-bottom">
+                      <span>From <strong>{money(evt.priceFrom)}</strong></span>
+                      <Link to="/events" className="btn-book-ticket">Select Tickets →</Link>
                     </div>
-                  )}
-
-                  {/* BMS Signature Rating Strip */}
-                  <div className="bms-rating-strip">
-                    <span className="bms-rating-star">★</span>
-                    <strong className="bms-rating-num">{m.rating || '8.4/10'}</strong>
-                    <span className="bms-vote-count">38.4K Votes</span>
-                  </div>
-
-                  {/* Format Badges */}
-                  <div className="bms-format-badges">
-                    <span className="format-badge">{m.formats?.join(', ') || '2D'}</span>
                   </div>
                 </div>
-              </Link>
-
-              <div className="bms-movie-info">
-                <h3 className="bms-movie-title">
-                  <Link to={`/movies/${m._id}`}>{m.title}</Link>
-                </h3>
-                <p className="bms-movie-sub">{m.rating || 'U/A'} · {m.language}</p>
-                <p className="bms-movie-genres">{m.genres?.join(', ')}</p>
-
-                <div className="bms-card-bottom">
-                  <span className="bms-ticket-price">From ₹180</span>
-                  <Link to={`/movies/${m._id}`} className="bms-btn-book">
-                    Book Tickets
-                  </Link>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
 
-        <Pager meta={data?.meta} onPage={setPage} />
+        {/* Active tab content: SPORTS */}
+        {activeTab === 'sports' && (
+          <div className="tab-pane-sports">
+            <div className="bms-events-grid-preview" style={{ marginTop: '1.5rem' }}>
+              {(liveEvents.data?.events || []).filter((e) => e.category === 'Sports' || e.type.includes('Cricket')).map((evt) => (
+                <div key={evt.id} className="bms-event-card-preview">
+                  <div className="evt-preview-poster">
+                    <img src={evt.poster} alt={evt.title} loading="lazy" />
+                    <span className="evt-type-badge">{evt.type}</span>
+                  </div>
+                  <div className="evt-preview-info">
+                    <h4 className="evt-preview-title">{evt.title}</h4>
+                    <p className="evt-preview-venue">📍 {evt.venue}</p>
+                    <div className="evt-preview-bottom">
+                      <span>From <strong>{money(evt.priceFrom)}</strong></span>
+                      <Link to="/sports" className="btn-book-ticket">Select Tickets →</Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
-      {/* ===== THE BEST OF LIVE EVENTS STRIP ===== */}
+      {/* =====================================================================
+          BOOKMYSHOW SIGNATURE EXPERIENCES: STREAM, EVENTS, OFFERS
+          ===================================================================== */}
+      {/* 1. Live Events Showcase */}
       <section className="bms-section-container bms-events-highlight" aria-labelledby="live-events-heading">
         <div className="bms-section-header">
           <div>
@@ -342,7 +547,7 @@ export default function Movies({ currentCity, onOpenCityModal }) {
                 <p className="evt-preview-venue">📍 {evt.venue}</p>
                 <div className="evt-preview-bottom">
                   <span>From <strong>{money(evt.priceFrom)}</strong></span>
-                  <Link to="/events" className="bms-btn-book-sm">Book</Link>
+                  <Link to="/events" className="bms-btn-book-sm">Select Tickets</Link>
                 </div>
               </div>
             </div>
@@ -350,7 +555,7 @@ export default function Movies({ currentCity, onOpenCityModal }) {
         </div>
       </section>
 
-      {/* ===== BOOKMYSHOW STREAM SHOWCASE ===== */}
+      {/* 2. Stream Showcase */}
       <section className="bms-stream-strip">
         <div className="stream-strip-content">
           <div className="stream-strip-left">
@@ -368,12 +573,12 @@ export default function Movies({ currentCity, onOpenCityModal }) {
         </div>
       </section>
 
-      {/* ===== OFFERS & PROMOTIONS STRIP ===== */}
-      <section className="bms-section-container" aria-labelledby="offers-heading">
+      {/* 3. Offers & Promotions Strip */}
+      <section className="bms-section-container" aria-labelledby="offers-heading" id="contact-footer">
         <div className="bms-section-header">
           <div>
-            <h2 id="offers-heading" className="bms-section-title">Offers For You</h2>
-            <p className="bms-section-subtitle">Save big with bank credit cards, BOGO passes, and cashback coupons</p>
+            <h2 id="offers-heading" className="bms-section-title">Exclusive Bank & Promo Offers</h2>
+            <p className="bms-section-subtitle">Save up to 50% with credit cards, BOGO passes, and cashback codes</p>
           </div>
           <Link to="/offers" className="bms-link-see-all">View All Offers ›</Link>
         </div>
