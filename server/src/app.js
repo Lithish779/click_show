@@ -17,6 +17,7 @@ app.get('/api/openapi.json', (_req, res) => res.json(openapi));
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tmdb', require('./routes/tmdb'));
+app.use('/api/bms', require('./routes/bms'));
 app.use('/api/admin/reports', require('./routes/reports'));
 app.use('/api', require('./routes/catalog'));
 app.use('/api', require('./routes/bookings'));
