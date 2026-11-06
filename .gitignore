@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files
+.env
+.env.*
+*/.env
+*/.env.*
+!.env.example
+*/!.env.example
+
+# Production & build
+dist/
+build/
+*/dist/
+
+# Tests & logs
+coverage/
+*.log
+npm-debug.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
