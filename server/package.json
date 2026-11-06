@@ -9,6 +9,7 @@
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
     "sync:tmdb": "node scripts/sync-tmdb.js",
+    "release:shows": "node scripts/release-all-shows.js",
     "test": "jest --runInBand --forceExit"
   },
   "dependencies": {

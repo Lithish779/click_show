@@ -288,6 +288,21 @@ export default function SeatSelection() {
         </button>
       </div>
 
+      {/* Special Event Show Banner if this show is an event */}
+      {s?.eventTitle && (
+        <div className="bms-special-event-ribbon">
+          <div className="ribbon-sparkle-box">✨</div>
+          <div className="ribbon-info">
+            <span className="ribbon-tag">SPECIAL EVENT SCREENING PASS</span>
+            <strong className="ribbon-title">{s.eventTitle}</strong>
+            {s.eventPerks?.length > 0 && (
+              <span className="ribbon-perks">Included Perks: {s.eventPerks.join(' · ')}</span>
+            )}
+          </div>
+          <span className="ribbon-badge-released">TICKETS RELEASED</span>
+        </div>
+      )}
+
       {/* QUICK ADD SEATS BAR */}
       {!hold && (
         <div className="quick-add-seats-bar">

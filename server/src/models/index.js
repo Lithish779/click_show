@@ -62,6 +62,9 @@ const showSchema = new Schema(
     language: { type: String, required: true },
     prices: { type: Schema.Types.Mixed, required: true }, // { STANDARD: 200, PREMIUM: 300, ... } whole rupees
     status: { type: String, enum: ['SCHEDULED', 'CANCELLED'], default: 'SCHEDULED' },
+    eventTitle: { type: String, default: '' },
+    eventPerks: { type: [String], default: [] },
+    isEventSpecial: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

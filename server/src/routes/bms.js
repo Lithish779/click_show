@@ -50,5 +50,23 @@ router.get('/cities', (_req, res) => {
   res.json({ cities: POPULAR_CITIES });
 });
 
+/* Event Ticket Booking and Release */
+router.post('/events/book', async (req, res, next) => {
+  try {
+    const booking = await bms.bookEventTicket({
+      ...req.body,
+      user: req.user,
+    });
+    res.status(201).json({ booking });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/events/bookings', (req, res) => {
+  const list = bms.getEventBookings(req.user?.id);
+  res.json({ bookings: list });
+});
+
 module.exports = router;
 

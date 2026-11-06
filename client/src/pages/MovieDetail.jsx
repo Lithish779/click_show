@@ -234,21 +234,35 @@ export default function MovieDetail({ currentCity }) {
                     <div key={s._id} className="showtime-pill-wrap">
                       <Link
                         to={`/shows/${s._id}`}
-                        className={`showtime-pill ${isSoldOut ? 'soldout' : isLow ? 'low' : 'available'}`}
+                        className={`showtime-pill ${isSoldOut ? 'soldout' : isLow ? 'low' : 'available'} ${s.isEventSpecial ? 'event-special' : ''}`}
                         title={`Screen: ${s.screen.name} | ${s.format} | ${s.availableSeats} seats available`}
                       >
+                        {s.eventTitle && (
+                          <span className="pill-event-badge">✨ {s.eventTitle}</span>
+                        )}
                         <span className="time-text">{startTime}</span>
                         <span className="format-text">{s.format}</span>
                         <span className="pill-select-tag">{isSoldOut ? 'Sold out' : 'Select Seats'}</span>
                       </Link>
 
-                      {/* Tooltip on hover showing prices */}
+                      {/* Tooltip on hover showing prices & event perks */}
                       <div className="showtime-price-tooltip">
+                        {s.eventTitle && (
+                          <div className="tt-event-header">
+                            <span className="tt-event-tag">SPECIAL EVENT SHOW</span>
+                            <strong>{s.eventTitle}</strong>
+                          </div>
+                        )}
                         <span className="tt-row">Screen: <strong>{s.screen.name}</strong></span>
                         <span className="tt-row">STANDARD: <strong>{money(s.prices?.STANDARD || 200)}</strong></span>
                         <span className="tt-row">PREMIUM: <strong>{money(s.prices?.PREMIUM || 320)}</strong></span>
                         {s.prices?.RECLINER && (
                           <span className="tt-row">RECLINER: <strong>{money(s.prices.RECLINER)}</strong></span>
+                        )}
+                        {s.eventPerks?.length > 0 && (
+                          <div className="tt-event-perks">
+                            🎁 <strong>Perks:</strong> {s.eventPerks.join(' · ')}
+                          </div>
                         )}
                         <span className="tt-seats">{s.availableSeats} seats left</span>
                       </div>
